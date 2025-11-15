@@ -1,16 +1,16 @@
 {
-	"id": "your-module-name",
-	"name": "your-module-name",
-	"shortname": "module-shortname",
-	"description": "A short one line description of your module",
+	"id": "echo",
+	"name": "etc-echo-integration-interface",
+	"shortname": "etc-echo",
+	"description": "Allows for control of ETC's Echo building lighting control system.",
 	"version": "0.0.0",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-your-module-name.git",
-	"bugs": "https://github.com/bitfocus/companion-module-your-module-name/issues",
+	"repository": "git+https://github.com/zklosko/companion-module-etc-echo.git",
+	"bugs": "https://github.com/zklosko/companion-module-etc-echo/issues",
 	"maintainers": [
 		{
-			"name": "Your name",
-			"email": "Your email"
+			"name": "Zachary Klosko",
+			"email": "zklosko@hopecentral.com"
 		}
 	],
 	"runtime": {
@@ -20,7 +20,10 @@
 		"entrypoint": "../main.js"
 	},
 	"legacyIds": [],
-	"manufacturer": "Your company",
-	"products": ["Your product"],
-	"keywords": []
+	"manufacturer": "ETC",
+	"products": ["Echo Integration Interface"],
+	"keywords": [
+		"Light",
+		"Building"
+	]
 }
