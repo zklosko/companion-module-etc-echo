@@ -5,8 +5,7 @@ import { UpdateActions } from './src/actions.js'
 import { UpdateFeedbacks } from './src/feedbacks.js'
 import { UpdateVariableDefinitions } from './src/variables.js'
 import { UpdatePresetDefinitions } from './src/presets.js'
-import { createUDPServer } from './src/udp/server.js'
-import { EchoInstance } from './src/Echo.js'
+import { EchoServer } from './src/udp/server.js'
 
 export default class ModuleInstance extends InstanceBase {
 	constructor(internal) {
@@ -14,12 +13,16 @@ export default class ModuleInstance extends InstanceBase {
 	}
 
 	async init(config) {
-		this.EchoData = new EchoInstance()
-
 		// The following runs when the module is opened for the first time or when the config is changed
 		this.config = config
 
 		await this.configUpdated(config)
+
+		this.EchoServer = new EchoServer(config)
+
+		this.EchoServer.on('status_change', (newStatus) => {
+			this.updateStatus(newStatus)
+		})
 
 		this.updateStatus(InstanceStatus.Ok)
 
@@ -31,25 +34,16 @@ export default class ModuleInstance extends InstanceBase {
 
 	// When module gets deleted or deactivated
 	async destroy() {
-		if (this.udp) {
-			this.udp.close()
-			delete this.udp
-		} else {
-			this.updateStatus(InstanceStatus.Disconnected)
-		}
+		this.EchoServer.closeServer()
 
+		this.updateStatus(InstanceStatus.Disconnected)
 		this.log('debug', 'destroy')
 	}
 
 	async configUpdated(config) {
-		if (this.udp) {
-			this.udp.close()
-			delete this.udp
-		}
-
 		this.config = config
 
-		createUDPServer(this)
+		this.EchoServer.updateConfig(config)
 	}
 
 	// Return config fields for web config

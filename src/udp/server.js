@@ -1,124 +1,115 @@
-import dgram from 'node:dgram'
-import { InstanceStatus, createModuleLogger } from '@companion-module/base'
+import { InstanceStatus, createModuleLogger, UDPHelper } from '@companion-module/base'
+import { EventEmitter } from 'node:events';
 
 // Make logger for UDP server
 const udplogger = createModuleLogger('UDP Server')
 
-export function createUDPServer(self) {
-    self.updateStatus(InstanceStatus.Connecting)
+export class EchoServer extends EventEmitter {
+    state
+    #socket
+    #config
+    
+    constructor(config) {
+        super()
+        this.#config = config
+        this.createState()
 
-    if (self.config.host) {
-        self.udp = dgram.createSocket({ type: 'udp4', reuseAddr: true })
-        self.udp.bind({ port: self.config.serverport, address: self.config.selfIP }, () => {
-            self.updateStatus(InstanceStatus.Ok)
-            udplogger.info('Listening for UDP packets on ' + self.config.serverport)
-        })
-
-        self.udp.on('error', (err) => {
-            self.updateStatus(InstanceStatus.ConnectionFailure, err.message)
-            udplogger.error('Network error: ' + err.message)
-
-            self.udp.close()
-        })
-
-        // If we get data, thing should be good
-        self.udp.on('listening', () => {
-            self.updateStatus(InstanceStatus.Ok)
-        })
-
-        // Call when data gets received
-        self.udp.on('message', (msg, dInfo) => {
-            let dataResponse = msg.toString()
-            self.spaceRegexCheck = new RegExp(String.raw`.+?(?=: +${self.config.space})`)
-
-            if (self.spaceRegexCheck.test(dataResponse)) {
-                switch (true) {
-                    case /E>pst act:/.test(dataResponse):
-                        // Expected data response: E>pst act: <space> <active preset>
-                        // If active preset == 0, no preset is applied
-                        udplogger.info('Preset data recieved')
-                        let pstData = dataResponse.slice(11).split(', ')
-                        self.EchoData.activePreset = pstData[1].replace(/(\r\n|\n|\r)/gm, '')
-
-                        // Update variables in Companion
-                        self.setVariableValues({
-                            activePreset: self.EchoData.activePreset,
-                        })
-
-                        // Update feedbacks
-                        self.checkFeedbacks('CheckInt', 'SpaceOff', 'ActivePreset')
-                        break
-                    case /E>space off:/.test(dataResponse):
-                        // Expected data response: E>space off: <space> <truthy/falsy> (1 == truthy)
-                        // Currently ignoring space data... assuming only using with one space
-                        udplogger.info('Space off data recieved')
-                        let offData = dataResponse.slice(13).split(', ')
-                        self.EchoData.spaceOff = offData[1].replace(/(\r\n|\n|\r)/gm, '') === '1' ? true : false
-
-                        // Update variables in Companion
-                        self.setVariableValues({
-                            spaceOff: self.EchoData.spaceOff,
-                        })
-
-                        // Update feedbacks
-                        self.checkFeedbacks('CheckInt', 'SpaceOff', 'ActivePreset')
-                        break
-                    case /E>seq act:/.test(dataResponse):
-                        udplogger.info('Sequence data recieved')
-                        let seqData = dataResponse.slice(11).split(', ')
-                        self.EchoData.activeSequence = seqData[1].replace(/(\r\n|\n|\r)/gm, '')
-
-                        self.setVariableValues({
-                            activeSequence: self.EchoData.activeSequence,
-                        })
-                        break
-                    case /E>lok:/.test(dataResponse):
-                        udplogger.info('Sync data recieved')
-                        break
-                    case /E>zone int:/.test(dataResponse):
-                        // Zone intensity data
-                        udplogger.info('Zone intensity data recieved')
-                        let zoneData = dataResponse.split('E>zone int: ')
-                        zoneData.shift() // First value in array should be blank
-                        zoneData.forEach((zone) => {
-                            let zRes = zone.split(', ')
-                            self.EchoData.zonesInts[zRes[1] - 1] = zRes[2].replace(/(\r\n|\n|\r)/gm, '')
-                        })
-
-                        // Update variables in Companion
-                        self.setVariableValues({
-                            z1_int: self.EchoData.zonesInts[0],
-                            z2_int: self.EchoData.zonesInts[1],
-                            z3_int: self.EchoData.zonesInts[2],
-                            z4_int: self.EchoData.zonesInts[3],
-                            z5_int: self.EchoData.zonesInts[4],
-                            z6_int: self.EchoData.zonesInts[5],
-                            z7_int: self.EchoData.zonesInts[6],
-                            z8_int: self.EchoData.zonesInts[7],
-                            z9_int: self.EchoData.zonesInts[8],
-                            z10_int: self.EchoData.zonesInts[9],
-                            z11_int: self.EchoData.zonesInts[10],
-                            z12_int: self.EchoData.zonesInts[11],
-                            z13_int: self.EchoData.zonesInts[12],
-                            z14_int: self.EchoData.zonesInts[13],
-                            z15_int: self.EchoData.zonesInts[14],
-                            z16_int: self.EchoData.zonesInts[15],
-                        })
-
-                        // Update feedbacks
-                        self.checkFeedbacks('CheckInt', 'SpaceOff', 'ActivePreset')
-                        break
-                    default:
-                        udplogger.info('Unexpected UDP data received')
-                        break
-                }
-            }
-        })
-
-        self.udp.on('status_change', (status, message) => {
-            self.updateStatus(status, message)
-        })
-    } else {
-        self.updateStatus(InstanceStatus.BadConfig)
     }
+
+    createState() {
+        this.state = new Map()
+        for (let i = 1; i <= 16; i++) {
+            let space = new Map()
+            space.set("preset", 0)
+            space.set("isOff", true)
+            space.set("sequences", Array(4).fill(0))
+            space.set("zones", Array(16).fill(0))
+            this.state.set(i, space)
+        }
+    }
+
+    createServer() {
+        this.#socket = new UDPHelper(this.#config.host, this.#config.port)
+
+        this.#socket.on('error', (err) => {
+            udplogger.error('Network error: ' + err.message)
+            // close socket?
+        })
+
+        this.#socket.on('listening', () => {
+            udplogger.info('Listening for UDP packets on ' + this.#config.serverport)
+            this.emit('status_change', InstanceStatus.Ok)
+        })
+
+        this.#socket.on('message', (msg, dInfo) => {
+            this.#parse(msg)
+        })
+    }
+
+    closeServer() {
+        this.#socket.close()
+        delete this.#socket
+    }
+
+    updateConfig(config) {
+        this.closeServer()
+        this.#config = config
+        this.createServer()
+    }
+
+    #parse(msg) {
+        const dataResponse = msg.toString()
+
+        if (dataResponse.slice(0,2) != 'E>') {
+            udplogger.warn('Unexpected UDP data received: ' + dataResponse)
+            return
+        }
+
+        let verb = dataResponse.split(":")[0]
+        let args = dataResponse.split(":")[1].split(",")
+        let cleanArgs = args.map(a => parseInt(a.trim()))
+
+        let space, preset, zone, sequence, level
+        const spaceState = this.state.get(space)
+        if (!spaceState) {
+            udplogger.warn(`Received data for unknown space ${space}`)
+            return
+        }
+        switch (verb) {
+            case 'pst act':
+                space = cleanArgs[0]
+                preset = cleanArgs[1]
+                spaceState.set("preset", preset)
+                this.emit('check_feedbacks')
+                break
+            case 'space off':
+                space = cleanArgs[0]
+                spaceState.set("zones", Array(16).fill(0))
+                this.emit('check_feedbacks')
+                break
+            case 'seq act':
+                space = cleanArgs[0]
+                sequence = cleanArgs[1]
+                spaceState.get("sequences")[sequence - 1] = 1
+                break
+            case 'seq dact':
+                space = cleanArgs[0]
+                sequence = cleanArgs[1]
+                spaceState.get("sequences")[sequence - 1] = 0
+                break
+            case 'lok':
+                break
+            case 'zone int':
+                space = cleanArgs[0]
+                zone = cleanArgs[1]
+                level = cleanArgs[2]
+                spaceState.get("zones")[zone - 1] = level
+                this.emit('check_feedbacks')
+                break
+            default:
+                udplogger.info('Unexpected UDP data received')
+                break
+        }
+    }
+
 }
