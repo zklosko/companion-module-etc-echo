@@ -29,7 +29,7 @@ export async function UpdateFeedbacks(self) {
 				},
 			],
 			callback: (feedback) => {
-				return feedback.options.preset == self.EchoServer.state.get(feedback.options.space).get("preset")
+				return feedback.options.preset == self.EchoServer.state.get(feedback.options.space).get('preset')
 			},
 		},
 		SpaceOff: {
@@ -51,7 +51,7 @@ export async function UpdateFeedbacks(self) {
 				},
 			],
 			callback: (feedback) => {
-				return self.EchoServer.state.get(feedback.options.space).get("isOff")
+				return self.EchoServer.state.get(feedback.options.space).get('isOff')
 			},
 		},
 		CheckInt: {
@@ -89,7 +89,10 @@ export async function UpdateFeedbacks(self) {
 				},
 			],
 			callback: (feedback) => {
-				return feedback.options.int == self.EchoServer.state.get(feedback.options.space).get("zones")[feedback.options.zone - 1]
+				return (
+					feedback.options.int ==
+					self.EchoServer.state.get(feedback.options.space).get('zones')[feedback.options.zone - 1]
+				)
 			},
 		},
 	})

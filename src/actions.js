@@ -1,4 +1,4 @@
-import { createModuleLogger } from "@companion-module/base"
+import { createModuleLogger } from '@companion-module/base'
 
 // Make logger for UDP client
 const clientlogger = createModuleLogger('UDP Client')

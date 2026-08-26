@@ -38,13 +38,16 @@ export function UpdatePresetDefinitions(self) {
 			},
 			steps: [
 				{
-					down: [{ actionId: 'set_preset', options: {pst: { isExpression: true, value: `$(local:presetNumber)` }, fade_time: self.config.fadetime } }],
+					down: [
+						{
+							actionId: 'set_preset',
+							options: { pst: { isExpression: true, value: `$(local:presetNumber)` }, fade_time: self.config.fadetime },
+						},
+					],
 					up: [],
 				},
 			],
-			localVariables: [
-				{ variableType: 'simple', variableName: 'presetNumber', startupValue: 1}
-			],
+			localVariables: [{ variableType: 'simple', variableName: 'presetNumber', startupValue: 1 }],
 			feedbacks: [
 				{
 					feedbackId: 'ActivePreset',
@@ -67,13 +70,13 @@ export function UpdatePresetDefinitions(self) {
 			},
 			steps: [
 				{
-					down: [{ actionId: 'set_activate_sequence', options: { seq: { isExpression: true, value: `$(local:seqNum)` } } }],
+					down: [
+						{ actionId: 'set_activate_sequence', options: { seq: { isExpression: true, value: `$(local:seqNum)` } } },
+					],
 					up: [],
 				},
 			],
-			localVariables: [
-				{ variableType: 'simple', variableName: 'seqNum', startupValue: 1}
-			],
+			localVariables: [{ variableType: 'simple', variableName: 'seqNum', startupValue: 1 }],
 		},
 		deactivateSequence: {
 			name: 'Deactivate Sequence X',
@@ -86,16 +89,15 @@ export function UpdatePresetDefinitions(self) {
 			},
 			steps: [
 				{
-					down: [{ actionId: 'set_deactivate_sequence', options: { seq: { isExpression: true, value: `$(local:seqNum)` } } }],
+					down: [
+						{ actionId: 'set_deactivate_sequence', options: { seq: { isExpression: true, value: `$(local:seqNum)` } } },
+					],
 					up: [],
 				},
 			],
-			localVariables: [
-				{ variableType: 'simple', variableName: 'seqNum', startupValue: 1}
-			],
-		}
+			localVariables: [{ variableType: 'simple', variableName: 'seqNum', startupValue: 1 }],
+		},
 	}
-	
 
 	// // Create buttons for zone intensity control
 	// let zoneButtonInts = [0, 25, 50, 75, 100]
@@ -137,7 +139,6 @@ export function UpdatePresetDefinitions(self) {
 	// 	}
 	// }
 
-
 	const structure = [
 		{
 			id: 'a',
@@ -147,9 +148,9 @@ export function UpdatePresetDefinitions(self) {
 					// id: 'b',
 					// name: 'Recall Zone Preset',
 					type: 'simple',
-					presets: ['off']
-				}
-			]
+					presets: ['off'],
+				},
+			],
 		},
 		{
 			id: 'b',
@@ -159,9 +160,9 @@ export function UpdatePresetDefinitions(self) {
 					type: 'template',
 					presetId: 'activatePreset',
 					templateVariableName: 'presetNumber',
-					templateValues: self.EchoData.generatePresetArray('Preset', 16)
-				}
-			]
+					templateValues: self.EchoData.generatePresetArray('Preset', 16),
+				},
+			],
 		},
 		{
 			id: 'c',
@@ -171,9 +172,9 @@ export function UpdatePresetDefinitions(self) {
 					type: 'template',
 					presetId: 'activateSequence',
 					templateVariableName: 'seqNum',
-					templateValues: self.EchoData.generatePresetArray('Sequence', 4)
-				}
-			]
+					templateValues: self.EchoData.generatePresetArray('Sequence', 4),
+				},
+			],
 		},
 		{
 			id: 'd',
@@ -183,10 +184,10 @@ export function UpdatePresetDefinitions(self) {
 					type: 'template',
 					presetId: 'deactivateSequence',
 					templateVariableName: 'seqNum',
-					templateValues: self.EchoData.generatePresetArray('Sequence', 4)
-				}
-			]
-		}
+					templateValues: self.EchoData.generatePresetArray('Sequence', 4),
+				},
+			],
+		},
 	]
 
 	self.setPresetDefinitions(structure, presets)

@@ -18,6 +18,6 @@ export function UpdateVariableDefinitions(self) {
 		z16_int: { name: 'Zone 16 Intensity' },
 		activePreset: { name: 'Active Preset' },
 		activeSequence: { name: 'Active Sequence' },
-		spaceOff: {name: 'Space Off' },
+		spaceOff: { name: 'Space Off' },
 	})
 }
