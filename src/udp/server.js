@@ -57,6 +57,20 @@ export class EchoServer extends EventEmitter {
 	}
 
 	/**
+	 * Format and send UDP message to server
+	 * @param {string} msg 
+	 * @returns 
+	 */
+	async send(msg) {
+		const sendBuf = Buffer.from(msg, 'latin1')
+
+		if (this.#socket === undefined) return
+
+		udplogger.debug('sending to ' + this.#config.host + ':' + this.#config.port + ': ' + sendBuf.toString())
+		this.#socket.send(sendBuf, 0, sendBuf.length, this.#config.port, this.#config.host)
+	}
+
+	/**
 	 * Checks value of all zones in space to determine if space is off.
 	 * @param {number} space
 	 * @returns

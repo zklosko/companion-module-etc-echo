@@ -1,20 +1,4 @@
-import { createModuleLogger } from '@companion-module/base'
-
-// Make logger for UDP client
-const clientlogger = createModuleLogger('UDP Client')
-
 export function UpdateActions(self) {
-	const sendUDP = async (msg) => {
-		// Format and send UDP message to server
-		const sendBuf = Buffer.from(msg, 'latin1')
-
-		if (self.udp !== undefined) {
-			clientlogger.debug('sending to ' + self.config.host + ':' + self.config.port + ': ' + sendBuf.toString())
-
-			self.udp.send(sendBuf, 0, sendBuf.length, self.config.port, self.config.host)
-		}
-	}
-
 	self.setActionDefinitions({
 		set_preset: {
 			name: 'Set Active Preset',
@@ -39,7 +23,7 @@ export function UpdateActions(self) {
 			],
 			callback: async (event) => {
 				const cmd = 'E$pst act: ' + self.config.space + ', ' + event.options.pst + ', ' + event.options.fade_time + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		set_off: {
@@ -57,7 +41,7 @@ export function UpdateActions(self) {
 			],
 			callback: async (event) => {
 				const cmd = 'E$off: ' + self.config.space + ', ' + event.options.fade_time + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		set_activate_sequence: {
@@ -74,7 +58,7 @@ export function UpdateActions(self) {
 			],
 			callback: async (event) => {
 				const cmd = 'E$seq act: ' + self.config.space + ', ' + event.options.seq + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		set_deactivate_sequence: {
@@ -91,7 +75,7 @@ export function UpdateActions(self) {
 			],
 			callback: async (event) => {
 				const cmd = 'E$seq dect: ' + self.config.space + ', ' + event.options.seq + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		set_zone_int: {
@@ -133,7 +117,7 @@ export function UpdateActions(self) {
 					', ' +
 					event.options.fade_time +
 					'\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		get_preset: {
@@ -141,7 +125,7 @@ export function UpdateActions(self) {
 			options: [],
 			callback: async (event) => {
 				const cmd = 'E$pst get: ' + self.config.space + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		get_off: {
@@ -149,7 +133,7 @@ export function UpdateActions(self) {
 			options: [],
 			callback: async (event) => {
 				const cmd = 'E$off get: ' + self.config.space + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		get_sequence: {
@@ -157,7 +141,7 @@ export function UpdateActions(self) {
 			options: [],
 			callback: async (event) => {
 				const cmd = 'E$seq get: ' + self.config.space + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		get_sync: {
@@ -166,7 +150,7 @@ export function UpdateActions(self) {
 			options: [],
 			callback: async (event) => {
 				const cmd = 'E$sync get: ' + self.config.space + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 		get_zone_int: {
@@ -175,7 +159,7 @@ export function UpdateActions(self) {
 			options: [],
 			callback: async (event) => {
 				const cmd = 'E$zone int get: ' + self.config.space + '\r'
-				await sendUDP(cmd)
+				await self.EchoServer.send(cmd)
 			},
 		},
 	})
