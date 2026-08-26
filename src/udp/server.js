@@ -57,6 +57,22 @@ export class EchoServer extends EventEmitter {
         this.createServer()
     }
 
+    /**
+     * Checks value of all zones in space to determine if space is off.
+     * @param {number} space 
+     * @returns 
+     */
+    #isSpaceOff(space) {
+        const spaceState = this.state.get(space)
+        if (!spaceState) {
+            udplogger.warn(`Received data for unknown space ${space}`)
+            return
+        }
+        const spaceZones = spaceState.get("zones")
+        const isOff = spaceZones.some(z => { return z > 0})
+        this.state.get(space).set("isOff", isOff)
+    }
+
     #parse(msg) {
         const dataResponse = msg.toString()
 
@@ -80,22 +96,26 @@ export class EchoServer extends EventEmitter {
                 space = cleanArgs[0]
                 preset = cleanArgs[1]
                 spaceState.set("preset", preset)
+                this.#isSpaceOff(space)
                 this.emit('check_feedbacks')
                 break
             case 'space off':
                 space = cleanArgs[0]
                 spaceState.set("zones", Array(16).fill(0))
+                this.#isSpaceOff(space)
                 this.emit('check_feedbacks')
                 break
             case 'seq act':
                 space = cleanArgs[0]
                 sequence = cleanArgs[1]
                 spaceState.get("sequences")[sequence - 1] = 1
+                this.#isSpaceOff(space)
                 break
             case 'seq dact':
                 space = cleanArgs[0]
                 sequence = cleanArgs[1]
                 spaceState.get("sequences")[sequence - 1] = 0
+                this.#isSpaceOff(space)
                 break
             case 'lok':
                 break
@@ -104,6 +124,7 @@ export class EchoServer extends EventEmitter {
                 zone = cleanArgs[1]
                 level = cleanArgs[2]
                 spaceState.get("zones")[zone - 1] = level
+                this.#isSpaceOff(space)
                 this.emit('check_feedbacks')
                 break
             default:
